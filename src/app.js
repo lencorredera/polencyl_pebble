@@ -5,8 +5,10 @@ POLENCYL
   All rights reserved.
   
   Version control:
-  Current version: 0.1
-  v0.1 - 20150221 - First version. Parses data from xml feed
+  Current version: 0.2
+  v0.2 - 20150322 - Last station viewed used as "favorite" and shows 
+                    on app startup
+  v0.1 - 20150311 - First version. Parses data from xml feed
 ****************************************************************************/
 
 var UI = require('ui');
@@ -20,8 +22,8 @@ var DATA_URL='http://pruebas2.flagsolutions.net/pebble/pollenproxy.php';
 
 
 //Let's load settings
-var MICIUDAD= Settings.option('ciudad');
-console.log(MICIUDAD);
+var STATION= Settings.option('STATION');
+console.log(STATION);
 
 
 var parseFeed = function(polenData, quantity) {
@@ -110,7 +112,7 @@ splashWindow.on('show',function (){
         
             var cardContent='';
             var cardTitle;
-            Settings.option('Estacion',menuItems[e.itemIndex].title);      
+            Settings.option('STATION',menuItems[e.itemIndex].title);      
 //            console.log('ciudad setted');
             cardTitle = menuItems[e.itemIndex].title; // Pollen city name
             cardContent += menuItems[e.itemIndex].niveles; //Pollen level
@@ -131,11 +133,11 @@ splashWindow.on('show',function (){
           splashWindow.hide();
       
           // If a city was previously selected let's show it
-          if (MICIUDAD != null){
+          if (STATION != null){
             var cityIndex;
             for (cityIndex=0; cityIndex < menuItems.length; cityIndex++){
-              if (MICIUDAD == menuItems[cityIndex].title){
-                  defaultDetailCard= new UI. Card({
+              if (STATION == menuItems[cityIndex].title){
+                  var defaultDetailCard= new UI. Card({
                     title:'Provincia',
                     subtitle:menuItems[cityIndex].title,
                     body:menuItems[cityIndex].niveles,
@@ -154,7 +156,7 @@ splashWindow.on('show',function (){
       errorText = new UI.Text({
         position: new Vector2(0, 0),
         size: new Vector2(144, 168),
-        text:'Something went wrong. Please check your connection to DatosAbiertos and check for an app upgrade.',
+        text:'Error al conectar con DatosAbiertos. Comprueba tu conexion o actualiza PolenCyl.',
         font:'GOTHIC_28_BOLD',
         color:'black',
         textOverflow:'wrap',
