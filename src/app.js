@@ -138,7 +138,7 @@ splashWindow.on('show',function (){
             for (cityIndex=0; cityIndex < menuItems.length; cityIndex++){
               if (STATION == menuItems[cityIndex].title){
                   var defaultDetailCard= new UI. Card({
-                    title:'Provincia',
+                    title:'Estación',
                     subtitle:menuItems[cityIndex].title,
                     body:menuItems[cityIndex].niveles,
                     scrollable:true,   
