@@ -5,20 +5,30 @@ POLENCYL
   All rights reserved.
   
   Version control:
-  Current version: 0.2
+  Current version: 0.3
+  v0.3 - 20150513 - Adapted to new levels from JCYL Open Data. 
+                    PebbleJS crash fixed (limit number of levels per station)
+                    Higher pollen levels appears first in the station card
+                    
   v0.2 - 20150322 - Last station viewed used as "favorite" and shows 
                     on app startup
   v0.1 - 20150311 - First version. Parses data from xml feed
+  
+  Please note that although English words were used to name variables,
+      there are also Spanish in some cases just be aligned with names
+      available in data source (JCYL Open Data)
+      
 ****************************************************************************/
 
 var UI = require('ui');
 var ajax = require('ajax');
 var Vector2 = require('vector2');
 var Settings = require('settings');
-
+var MAX_LEVELS_PER_STATION = 40; // To avoid a very large string in station cards that may crash the app
 
 //var DATA_URL='http://www.datosabiertos.jcyl.es/web/jcyl/risp/es/mediciones/niveles_de_polen/1284208096554.xml';
-var DATA_URL='http://pruebas2.flagsolutions.net/pebble/pollenproxy.php';
+//var DATA_URL='http://pruebas2.flagsolutions.net/pebble/pollenproxy.php';
+var DATA_URL = 'http://www.flagsolutions.net/apis/pebble/pollenproxy.php';
 
 
 //Let's load settings
@@ -28,35 +38,69 @@ console.log(STATION);
 
 var parseFeed = function(polenData, quantity) {
  var items = [];
- var count;
- var i; 
-  
-  count = 0;
-  i=0;
+ var count=0;
+ var i=0;
+
 
   for (i=0; i< polenData.list.element.estacion.length; i++){
 //       console.log(polenData.document.list.element.estacion[i]["@attributes"].nombre);
       //For each city...
       var ciudad = polenData.list.element.estacion[i]["@attributes"].nombre;
-      var niveles = '';
+      var niveles = [];
       var j; j=0;
+      var nivelesText = '----   ----   ----   ----\n';
+      var pollinic_limit; //max number of pollen levels to allow in a card
 
-      niveles += '----   ----   ----   ----\n';
-      for (j=0; j< polenData.list.element.estacion[i].tipo_polinico.length; j++){
-        niveles += polenData.list.element.estacion[i].tipo_polinico[j]["@attributes"].nombre;
-        niveles +=':\n\t Real -> ' + polenData.list.element.estacion[i].tipo_polinico[j].valor_real.toLowerCase();
-        niveles +='\n\t Prev -> ' + polenData.list.element.estacion[i].tipo_polinico[j].valor_previsto.toLowerCase();
-        niveles += '\n----   ----   ----   ----\n';
+      pollinic_limit = (polenData.list.element.estacion[i].tipo_polinico.length < MAX_LEVELS_PER_STATION ? 
+                   polenData.list.element.estacion[i].tipo_polinico.length: MAX_LEVELS_PER_STATION);
+    
+    
+      for (j=0; j< pollinic_limit; j++){
+        var order =30, order_real = 30, order_previsto =30; // 30 -> "bajo", 20-> "moderado", 10->"alto"
+        var nivel =''; // Temp string to concat levels for current station and allow ordering
+                       // Nivel value will be pushed into niveles array. 
+        nivel += polenData.list.element.estacion[i].tipo_polinico[j]["@attributes"].nombre;
+        nivel +=':\n\t Real -> ' + polenData.list.element.estacion[i].tipo_polinico[j].valor_real.toLowerCase();
+        nivel +='\n\t Prev -> ' + polenData.list.element.estacion[i].tipo_polinico[j].valor_previsto.toLowerCase();
+        nivel += '\n----   ----   ----   ----\n';
+        
+        // We'll sort values "alto" first, "moderado" second, and "bajo" third
+        switch(polenData.list.element.estacion[i].tipo_polinico[j].valor_real.toLowerCase()){
+          case "moderado":
+            order_real =20;
+            break;
+          case "alto":
+            order_previsto = 10;
+        }
+        switch(polenData.list.element.estacion[i].tipo_polinico[j].valor_previsto.toLowerCase()){
+          case "moderado":
+            order_real =20;
+            break;
+          case "alto":
+            order_previsto = 10;
+        }
+        order = (order_real < order_previsto? order_real : order_previsto); //I get the minimum (asc ordering)
+          
+        niveles.push({
+          order:order,
+          nivel:nivel
+        });
+
       }
 
-
+        niveles.sort(function(a,b) { return a.order - b.order } );
+        for (var k=0; k< niveles.length; k++){
+            nivelesText += niveles[k].nivel; 
+        }    
+      
       items.push({
         title: ciudad,
-        niveles: niveles,
+        niveles: nivelesText,
         id: i,
       });
+}
 
-  }
+  
   // Finally return whole array
   return items;
 };
@@ -99,7 +143,7 @@ splashWindow.on('show',function (){
     function(data) {
           var menuItems = [];
           var resultsMenu;
-          menuItems = parseFeed(data,10);
+          menuItems = parseFeed(data,15);
           
           resultsMenu = new UI.Menu({
               sections: [{
