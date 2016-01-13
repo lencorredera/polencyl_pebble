@@ -44,6 +44,7 @@ var parseFeed = function(polenData, quantity) {
 
   for (i=0; i< polenData.list.element.estacion.length; i++){
 //       console.log(polenData.document.list.element.estacion[i]["@attributes"].nombre);
+//    console.log(i + "--" + JSON.stringify(polenData.list.element.estacion[i]["@attributes"].nombre));
       //For each city...
       var ciudad = polenData.list.element.estacion[i]["@attributes"].nombre;
       var niveles = [];
@@ -59,26 +60,36 @@ var parseFeed = function(polenData, quantity) {
         var order =30, order_real = 30, order_previsto =30; // 30 -> "bajo", 20-> "moderado", 10->"alto"
         var nivel =''; // Temp string to concat levels for current station and allow ordering
                        // Nivel value will be pushed into niveles array. 
-        nivel += polenData.list.element.estacion[i].tipo_polinico[j]["@attributes"].nombre;
-        nivel +=':\n\t Real -> ' + polenData.list.element.estacion[i].tipo_polinico[j].valor_real.toLowerCase();
-        nivel +='\n\t Prev -> ' + polenData.list.element.estacion[i].tipo_polinico[j].valor_previsto.toLowerCase();
-        nivel += '\n----   ----   ----   ----\n';
+        if (typeof(polenData.list.element.estacion[i].tipo_polinico[j]) != "undefined"){
+          nivel += polenData.list.element.estacion[i].tipo_polinico[j]["@attributes"].nombre;
+        } else {
+          continue;
+        }
         
-        // We'll sort values "alto" first, "moderado" second, and "bajo" third
-        switch(polenData.list.element.estacion[i].tipo_polinico[j].valor_real.toLowerCase()){
-          case "moderado":
-            order_real =20;
-            break;
-          case "alto":
-            order_previsto = 10;
+        if (typeof(polenData.list.element.estacion[i].tipo_polinico[j].valor_real) != "undefined"){
+          nivel +=':\n\t Real -> ' + polenData.list.element.estacion[i].tipo_polinico[j].valor_real.toLowerCase();
+          // We'll sort values "alto" first, "moderado" second, and "bajo" third
+          switch(polenData.list.element.estacion[i].tipo_polinico[j].valor_real.toLowerCase()){
+            case "moderado":
+              order_real =20;
+              break;
+            case "alto":
+              order_previsto = 10;
+          }
         }
-        switch(polenData.list.element.estacion[i].tipo_polinico[j].valor_previsto.toLowerCase()){
-          case "moderado":
-            order_real =20;
-            break;
-          case "alto":
-            order_previsto = 10;
+        if (typeof(polenData.list.element.estacion[i].tipo_polinico[j].valor_previsto) != "undefined"){
+          nivel +='\n\t Prev -> ' + polenData.list.element.estacion[i].tipo_polinico[j].valor_previsto.toLowerCase();
+          switch(polenData.list.element.estacion[i].tipo_polinico[j].valor_previsto.toLowerCase()){
+            case "moderado":
+              order_real =20;
+              break;
+            case "alto":
+              order_previsto = 10;
+          }
         }
+        nivel += '\n----   ----   ----   ----\n';
+
+
         order = (order_real < order_previsto? order_real : order_previsto); //I get the minimum (asc ordering)
           
         niveles.push({
