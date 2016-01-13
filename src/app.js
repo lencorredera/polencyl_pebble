@@ -5,7 +5,8 @@ POLENCYL
   All rights reserved.
   
   Version control:
-  Current version: 0.3
+  Current version: 0.4
+  v0.4 - 20160113 - Adapted to new format from JCYL Open Data. 
   v0.3 - 20150513 - Adapted to new levels from JCYL Open Data. 
                     PebbleJS crash fixed (limit number of levels per station)
                     Higher pollen levels appears first in the station card
